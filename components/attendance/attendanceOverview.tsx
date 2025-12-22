@@ -89,20 +89,20 @@ export default function AttendanceOverview() {
     if (!course.schedule || !course.schedule[today]) return;
 
     const hours = course.schedule[today];
-    const alreadyMarked =
-      course.attendanceLog?.[todayDateKey] === true;
+    const alreadyMarked = course.attendanceLog?.[todayDateKey] === true;
 
     try {
       const ref = doc(db, "courses", course.id);
 
       if (alreadyMarked) {
-        // UNMARK: class still happened, student didn’t attend
+        // UNMARK: Remove both attended AND total hours
         await updateDoc(ref, {
           attendedClasses: increment(-hours),
+          totalClasses: increment(-hours),  // ← FIX: Also decrement total
           [`attendanceLog.${todayDateKey}`]: false,
         });
       } else {
-        // MARK: first time today → class happened + student attended
+        // MARK: Add both attended AND total hours
         await updateDoc(ref, {
           attendedClasses: increment(hours),
           totalClasses: increment(hours),
@@ -110,7 +110,7 @@ export default function AttendanceOverview() {
         });
       }
 
-      // instant UI update
+      // Instant UI update
       setCourses((prev) =>
         prev.map((c) =>
           c.id === course.id
@@ -121,11 +121,9 @@ export default function AttendanceOverview() {
                   [todayDateKey]: !alreadyMarked,
                 },
                 attendedClasses:
-                  (c.attendedClasses ?? 0) +
-                  (alreadyMarked ? -hours : hours),
+                  (c.attendedClasses ?? 0) + (alreadyMarked ? -hours : hours),
                 totalClasses:
-                  c.totalClasses ??
-                  (!alreadyMarked ? hours : c.totalClasses),
+                  (c.totalClasses ?? 0) + (alreadyMarked ? -hours : hours),  // ← FIX: Update total in UI too
               }
             : c
         )
