@@ -46,7 +46,13 @@ export default function AssistantPage() {
     setInput('');
     setLoading(true);
 
-    setMessages(prev => [...prev, { role: 'user', content: userText }]);
+    const updatedMessages: Message[] = [
+      ...messages,
+      { role: 'user', content: userText },
+    ];
+
+
+    setMessages(updatedMessages);
 
     try {
       const res = await fetch('/api/assistant', {
@@ -54,13 +60,13 @@ export default function AssistantPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userText,
+          messages: updatedMessages, // ✅ MEMORY
           currentSchedule: schedule,
         }),
       });
 
       const data = await res.json();
 
-      // ---------- CHAT RESPONSE ----------
       if (data.type === "chat") {
         setMessages(prev => [
           ...prev,
@@ -68,7 +74,6 @@ export default function AssistantPage() {
         ]);
       }
 
-      // ---------- SCHEDULE RESPONSE ----------
       if (data.type === "schedule") {
         try {
           const updatedSchedule = JSON.parse(data.reply);
@@ -137,6 +142,7 @@ export default function AssistantPage() {
           Send
         </button>
       </div>
+
       {schedule && <WeeklySchedule schedule={schedule} />}
     </div>
   );

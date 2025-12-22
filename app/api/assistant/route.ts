@@ -32,22 +32,40 @@ Rules:
 
 export async function POST(req: Request) {
   try {
-    const { message, currentSchedule } = await req.json();
+    const { message, messages, currentSchedule } = await req.json();
 
     const model = genAI.getGenerativeModel({
       model: "gemini-3-flash-preview",
     });
 
-    // ---------- 1️⃣ INTENT DETECTION ----------
-    const intentRes = await model.generateContent(
-      `${INTENT_PROMPT}\n\nUSER_MESSAGE:\n"${message}"`
-    );
+    // ---------- BUILD MEMORY ----------
+    const chatHistory = messages
+      .map((m: any) => `${m.role.toUpperCase()}: ${m.content}`)
+      .join("\n");
+
+    // ---------- 1️⃣ INTENT ----------
+    const intentRes = await model.generateContent(`
+${INTENT_PROMPT}
+
+CONVERSATION:
+${chatHistory}
+
+LAST_MESSAGE:
+"${message}"
+`);
 
     const { intent } = JSON.parse(intentRes.response.text());
 
-    // ---------- 2️⃣ NORMAL CHAT ----------
+    // ---------- 2️⃣ CHAT ----------
     if (intent === "chat") {
-      const chatRes = await model.generateContent(message);
+      const chatRes = await model.generateContent(`
+You are a helpful AI assistant.
+Continue the conversation naturally.
+
+${chatHistory}
+
+ASSISTANT:
+`);
 
       return NextResponse.json({
         type: "chat",
@@ -55,14 +73,17 @@ export async function POST(req: Request) {
       });
     }
 
-    // ---------- 3️⃣ SCHEDULE MODIFICATION ----------
+    // ---------- 3️⃣ SCHEDULE ----------
     const scheduleRes = await model.generateContent(`
 ${SCHEDULER_PROMPT}
+
+CONVERSATION:
+${chatHistory}
 
 CURRENT_SCHEDULE:
 ${JSON.stringify(currentSchedule, null, 2)}
 
-USER_MESSAGE:
+USER_REQUEST:
 "${message}"
 `);
 
