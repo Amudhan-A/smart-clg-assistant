@@ -48,7 +48,7 @@ export default function Home() {
             <Link
               key={feature.href}
               href={feature.href}
-              className="bg-white rounded-lg shadow-lg p-8 hover:shadow-xl transition-shadow duration-500 hover:-translate-y-1 transform"
+              className="bg-white rounded-lg shadow-lg p-8 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 transform"
             >
               <div className="text-5xl mb-4">{feature.icon}</div>
               <h2 className="text-2xl font-semibold text-gray-900 mb-3">
