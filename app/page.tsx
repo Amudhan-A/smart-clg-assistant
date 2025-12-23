@@ -1,4 +1,8 @@
+'use client'
+
 import Link from 'next/link';
+import { useAuth } from '@/context/AuthContext';
+
 
 export default function Home() {
   const features = [
@@ -27,6 +31,10 @@ export default function Home() {
       icon: '📚',
     },
   ];
+
+  
+const { user, loading } = useAuth();    // TEMP , DELTE IT LATER
+console.log(user, loading);   
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">

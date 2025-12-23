@@ -1,6 +1,11 @@
+'use client'
 import Link from 'next/link';
+import { useAuth } from '@/context/AuthContext';
+
 
 export default function Navigation() {
+  const { user, loading, loginWithGoogle, logout } = useAuth();
+
   return (
     <nav className="bg-gray-800 text-white p-4">
       <div className="container mx-auto flex gap-6">
@@ -20,6 +25,24 @@ export default function Navigation() {
           AI Assistant
         </Link>
       </div>
+      {!loading && (
+        user ? (
+          <button
+            onClick={logout}
+            className="px-4 py-2 rounded bg-gray-200"
+          >
+            Logout
+          </button>
+        ) : (
+          <button
+            onClick={loginWithGoogle}
+            className="px-4 py-2 rounded bg-indigo-600 text-white"
+          >
+            Login
+          </button>
+        )
+      )}
+
     </nav>
   );
 }
