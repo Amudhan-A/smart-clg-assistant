@@ -11,7 +11,8 @@ import {
   updateDoc,
   increment,
 } from "firebase/firestore";
-import { db, auth } from "@/src/lib/firebase";
+import { db } from "@/src/lib/firebase";
+import { useAuth } from "@/context/AuthContext";
 
 type Course = {
   id: string;
@@ -38,20 +39,22 @@ export default function AttendanceOverview() {
   const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
   const today = getTodayKey(); // for testing
   const todayDateKey = getTodayDateKey();
+  const { user } = useAuth();
 
   /* ---------------- FETCH ---------------- */
 
   const fetchCourses = async () => {
     try {
-      const userId = auth.currentUser?.uid ?? "dev-user";
+      
+      
+      const userId = user!.uid;
 
-      const q = query(
-        collection(db, "courses"),
-        where("userId", "==", userId)
+      
+
+      const snapshot = await getDocs(
+        collection(db, "users", user!.uid, "courses")
       );
-
-      const snapshot = await getDocs(q);
-
+      
       const data: Course[] = snapshot.docs.map((docSnap) => ({
         id: docSnap.id,
         ...(docSnap.data() as Omit<Course, "id">),
@@ -66,8 +69,9 @@ export default function AttendanceOverview() {
   };
 
   useEffect(() => {
+    if(!user) return;
     fetchCourses();
-  }, []);
+  }, [  user]);
 
   /* ---------------- DELETE ---------------- */
 
@@ -75,7 +79,7 @@ export default function AttendanceOverview() {
     if (!confirm("Are you sure you want to delete this course?")) return;
 
     try {
-      await deleteDoc(doc(db, "courses", courseId));
+      await deleteDoc(doc(db, "users", user!.uid, "courses", courseId));
       setCourses((prev) => prev.filter((c) => c.id !== courseId));
     } catch (err) {
       console.error(err);
@@ -92,7 +96,7 @@ export default function AttendanceOverview() {
     const alreadyMarked = course.attendanceLog?.[todayDateKey] === true;
 
     try {
-      const ref = doc(db, "courses", course.id);
+      const ref = doc(db, "users", user!.uid, "courses", course.id);
 
       if (alreadyMarked) {
         // UNMARK: Remove both attended AND total hours

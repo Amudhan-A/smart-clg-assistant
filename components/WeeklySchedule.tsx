@@ -24,25 +24,6 @@ function formatTime(time: string): string {
   return `${hours}:${minutes} ${period}`;
 }
 
-// Get color based on task name
-function getTaskColor(task: string): string {
-  const lowercaseTask = task.toLowerCase();
-  
-  if (lowercaseTask.includes('gym') || lowercaseTask.includes('workout') || lowercaseTask.includes('exercise')) {
-    return 'bg-orange-100 border-orange-300 text-orange-900';
-  }
-  if (lowercaseTask.includes('meeting') || lowercaseTask.includes('call')) {
-    return 'bg-blue-100 border-blue-300 text-blue-900';
-  }
-  if (lowercaseTask.includes('lunch') || lowercaseTask.includes('dinner') || lowercaseTask.includes('breakfast')) {
-    return 'bg-green-100 border-green-300 text-green-900';
-  }
-  if (lowercaseTask.includes('study') || lowercaseTask.includes('learn') || lowercaseTask.includes('read')) {
-    return 'bg-purple-100 border-purple-300 text-purple-900';
-  }
-  
-  return 'bg-gray-100 border-gray-300 text-gray-900';
-}
 
 export default function WeeklySchedule({ schedule }: { schedule: Schedule }) {
   if (!schedule) return null;
@@ -74,7 +55,7 @@ export default function WeeklySchedule({ schedule }: { schedule: Schedule }) {
           return (
             <div
               key={day}
-              className="bg-gradient-to-b from-gray-50 to-white rounded-xl border border-gray-200 p-4 min-h-[280px] flex flex-col"
+              className="bg-gradient-to-b from-gray-50 to-white text-black rounded-xl border border-gray-200 p-4 min-h-[280px] flex flex-col"
             >
               {/* Day Header */}
               <div className="text-center mb-4 pb-3 border-b border-gray-200 ">
@@ -99,7 +80,7 @@ export default function WeeklySchedule({ schedule }: { schedule: Schedule }) {
                   sortedBlocks.map((block, idx) => (
                     <div
                       key={block.id || idx}
-                      className={`rounded-lg border-2 p-3 transition-all hover:scale-105 hover:shadow-md ${getTaskColor(block.task)}`}
+                      className={`rounded-lg border-2 p-3 transition-all hover:scale-105 hover:shadow-md`}
                     >
                       <p className="font-semibold text-sm mb-2 leading-tight">
                         {block.task}

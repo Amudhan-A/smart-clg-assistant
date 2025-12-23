@@ -11,6 +11,10 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import { auth } from '@/src/lib/firebase';
 import { AppUser, toAppUser } from '@/types/user';
 
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/src/lib/firebase';
+
+
 type AuthContextType = {
   user: FirebaseUser | null;
   appUser: AppUser | null;
@@ -21,6 +25,27 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+async function saveUserToFirestore(appUser: AppUser) {
+
+  const userRef = doc(db, 'users', appUser.uid);
+
+  await setDoc(
+    userRef,
+    {
+      profile: {
+        email: appUser.email,
+        displayName: appUser.displayName,
+        photoURL: appUser.photoURL,
+        emailVerified: appUser.emailVerified,
+      },
+      lastLoginAt: serverTimestamp(),
+    },
+    { merge: true }
+  );
+
+}
+
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [appUser, setAppUser] = useState<AppUser | null>(null);
@@ -29,9 +54,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
          console.log("Auth resolved:", firebaseUser); // 👈 ADD THIS LINE (TEMP)
-      setUser(firebaseUser);
-      setAppUser(firebaseUser ? toAppUser(firebaseUser) : null);
+      if (firebaseUser) {
+        const appUser = toAppUser(firebaseUser);
+        setUser(firebaseUser);
+        setAppUser(appUser);
+
+        // 🔥 SAVE USER PROFILE (ONE TIME / SAFE)
+        saveUserToFirestore(appUser).catch(console.error);
+      } else {
+        setUser(null);
+        setAppUser(null);
+      }
+
       setLoading(false);
+
     });
 
     return () => unsubscribe();

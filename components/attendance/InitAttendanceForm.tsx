@@ -2,13 +2,15 @@
 
 import { useState } from "react";
 import { addDoc, collection } from "firebase/firestore";
-import { db, auth } from "@/src/lib/firebase";
+import { db } from "@/src/lib/firebase";
+import { useAuth } from "@/context/AuthContext";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
 
 type Schedule = Record<string, number>;
 
 export default function InitAttendanceForm() {
+  const { user } = useAuth();
   const [courseName, setCourseName] = useState("");
   const [schedule, setSchedule] = useState<Schedule>({
     Mon: 0,
@@ -28,6 +30,8 @@ export default function InitAttendanceForm() {
   };
 
   const handleSubmit = async () => {
+    if(!user) return;
+
     const totalWeeklyHours = Object.values(schedule).reduce(
       (sum, h) => sum + h,
       0
@@ -38,18 +42,17 @@ export default function InitAttendanceForm() {
       return;
     }
 
-    const userId = auth.currentUser?.uid ?? "dev-user"; // TEMP DEV MODE, HAVE TO CHANGE IT LATER
+    
 
     try {
       setLoading(true);
 
-      await addDoc(collection(db, "courses"), {
+      await addDoc(collection(db, "users", user!.uid, "courses"), {
         name: courseName,
         schedule, // 👈 per-day hours
         minAttendance,
         attendedClasses: 0,
         totalClasses: 0,
-        userId,
         createdAt: new Date(),
       });
 
