@@ -2,43 +2,93 @@
 
 import WeeklySchedule from "@/components/WeeklySchedule";
 import { useEffect, useState } from 'react';
+import { useAuth } from "@/context/AuthContext";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { db } from "@/src/lib/firebase";
 
 type Message = {
   role: 'user' | 'assistant';
   content: string;
 };
 
+function normalizeSchedule(schedule: any) {
+  if (!schedule?.days) return schedule;
+
+  const fixedDays: any = {};
+
+  for (const day of Object.keys(schedule.days)) {
+    fixedDays[day] = schedule.days[day].map((block: any) => ({
+      task: block.task ?? block.title ?? block.name ?? "Untitled task",
+      start: block.start ?? "",
+      end: block.end ?? "",
+    }));
+  }
+
+  return {
+    ...schedule,
+    days: fixedDays,
+  };
+}
+
+
 export default function AssistantPage() {
+  const { user, loading: authLoading } = useAuth();
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [schedule, setSchedule] = useState<any | null>(null);
 
-  // ---------- INIT SCHEDULE ----------
+  // ✅ ALWAYS call hooks first
   useEffect(() => {
-    if (!schedule) {
-      setSchedule({
-        userId: "u1",
-        weekStart: "2025-02-10",
-        timezone: "Asia/Kolkata",
-        days: {
-          Monday: [],
-          Tuesday: [],
-          Wednesday: [],
-          Thursday: [],
-          Friday: [],
-          Saturday: [],
-          Sunday: [],
-        },
-        meta: {
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          version: 1,
-        },
-      });
-    }
-  }, [schedule]);
+    if (!user) return;
 
+    const loadSchedule = async () => {
+      const ref = doc(db, "users", user.uid, "schedule", "weekly");
+      const snap = await getDoc(ref);
+
+      if (snap.exists()) {
+        setSchedule(normalizeSchedule(snap.data()));
+      } else {
+        const emptySchedule = {
+          weekStart: new Date().toISOString().slice(0, 10),
+          timezone: "Asia/Kolkata",
+          days: {
+            Monday: [],
+            Tuesday: [],
+            Wednesday: [],
+            Thursday: [],
+            Friday: [],
+            Saturday: [],
+            Sunday: [],
+          },
+        };
+
+        await setDoc(ref, emptySchedule);
+        setSchedule(emptySchedule);
+      }
+    };
+
+    loadSchedule();
+  }, [user]);
+
+  // ---------- AUTH GUARDS (AFTER HOOKS) ----------
+  if (authLoading) {
+    return <p>Checking authentication...</p>;
+  }
+
+  if (!user) {
+    return (
+      <div className="max-w-3xl mx-auto p-6">
+        <h1 className="text-2xl font-bold">Sign in required</h1>
+        <p className="text-gray-600 mt-2">
+          Please log in to use the AI assistant.
+        </p>
+      </div>
+    );
+  }
+
+  // ---------- SEND MESSAGE ----------
   const sendMessage = async () => {
     if (!input.trim() || !schedule) return;
 
@@ -51,16 +101,17 @@ export default function AssistantPage() {
       { role: 'user', content: userText },
     ];
 
-
     setMessages(updatedMessages);
 
     try {
       const res = await fetch('/api/assistant', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+         },
         body: JSON.stringify({
           message: userText,
-          messages: updatedMessages, // ✅ MEMORY
+          messages: updatedMessages,
           currentSchedule: schedule,
         }),
       });
@@ -75,22 +126,22 @@ export default function AssistantPage() {
       }
 
       if (data.type === "schedule") {
-        try {
-          const updatedSchedule = JSON.parse(data.reply);
-          setSchedule(updatedSchedule);
+        const rawSchedule = JSON.parse(data.reply);
+        const normalizedSchedule = normalizeSchedule(rawSchedule);
 
-          setMessages(prev => [
-            ...prev,
-            { role: 'assistant', content: "✅ Schedule updated" },
-          ]);
-        } catch {
-          setMessages(prev => [
-            ...prev,
-            { role: 'assistant', content: "⚠️ Failed to update schedule" },
-          ]);
-        }
+        setSchedule(normalizedSchedule);
+
+        await setDoc(
+          doc(db, "users", user.uid, "schedule", "weekly"),
+          normalizedSchedule,
+          { merge: true }
+        );
+
+        setMessages(prev => [
+          ...prev,
+          { role: 'assistant', content: "✅ Schedule updated" },
+        ]);
       }
-
     } catch (err) {
       console.error(err);
     } finally {
@@ -98,6 +149,7 @@ export default function AssistantPage() {
     }
   };
 
+  // ---------- UI ----------
   return (
     <div className="max-w-3xl mx-auto p-6">
       <h1 className="text-3xl font-bold mb-4">AI Assistant</h1>
