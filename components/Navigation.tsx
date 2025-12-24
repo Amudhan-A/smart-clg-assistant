@@ -24,24 +24,26 @@ export default function Navigation() {
         <Link href="/assistant" className="hover:text-gray-300 transition-colors">
           AI Assistant
         </Link>
-      </div>
-      {!loading && (
+
+        {!loading && (
         user ? (
           <button
             onClick={logout}
-            className="px-4 py-2 rounded bg-gray-200"
+            className="px-4 py-2 rounded bg-gray-200 ml-auto bg-red-400"
           >
             Logout
           </button>
         ) : (
           <button
             onClick={loginWithGoogle}
-            className="px-4 py-2 rounded bg-indigo-600 text-white"
+            className="px-4 py-2 rounded  text-white ml-auto bg-green-400"
           >
             Login
           </button>
         )
       )}
+      </div>
+      
 
     </nav>
   );

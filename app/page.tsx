@@ -33,16 +33,16 @@ export default function Home() {
   ];
 
   
-const { user, loading } = useAuth();    // TEMP , DELTE IT LATER
+const { user, loading } = useAuth();    
 console.log(user, loading);   
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <main className="min-h-screen bg-gradient-to-br text-white bg-gray-900">
       <div className="container mx-auto px-4 py-16">
         {/* Header Section */}
         <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold text-gray-900 mb-4">
-            Smart Academic & Life Management System
+          <h1 className="text-5xl font-bold  mb-4">
+            ACADEX - AI 
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Your all-in-one platform for managing academic life. Track attendance, test your knowledge,
@@ -51,15 +51,15 @@ console.log(user, loading);
         </div>
 
         {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto ">
           {features.map((feature) => (
             <Link
               key={feature.href}
               href={feature.href}
-              className="bg-white rounded-lg shadow-lg p-8 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 transform"
+              className="bg-gray-800 rounded-lg shadow-lg p-8 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 transform "
             >
               <div className="text-5xl mb-4">{feature.icon}</div>
-              <h2 className="text-2xl font-semibold text-gray-900 mb-3">
+              <h2 className="text-2xl font-semibold text-white mb-3">
                 {feature.title}
               </h2>
               <p className="text-gray-600">
