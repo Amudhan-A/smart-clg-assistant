@@ -166,6 +166,7 @@ export default function AssistantPage() {
   // ---------- UI ----------
   return (
     <div className="min-h-screen bg-gray-950 p-4 sm:p-8">
+      
       <div className="max-w-6xl mx-auto space-y-6 flex flex-col">
         {/* Header Section */}
         <div className="bg-gradient-to-br from-gray-900 to-gray-900/50 rounded-2xl border border-gray-800 p-8 shadow-xl">

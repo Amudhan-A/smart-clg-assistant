@@ -54,7 +54,7 @@ LAST_MESSAGE:
 "${message}"
 `);
 
-    const { intent } = JSON.parse(intentRes.response.text());
+    const { intent } = JSON.parse(intentRes.response.text().replace(/```json|```/g, "").trim());
 
     // ---------- 2️⃣ CHAT ----------
     if (intent === "chat") {
@@ -62,6 +62,12 @@ LAST_MESSAGE:
 You are a helpful AI assistant.
 Continue the conversation naturally.
 
+The user has the following weekly schedule:
+${JSON.stringify(currentSchedule, null, 2)}
+
+Use it ONLY if relevant.
+
+Conversation so far:  
 ${chatHistory}
 
 ASSISTANT:
