@@ -3,7 +3,15 @@ type TimeBlock = {
   task: string;
   start: string;
   end: string;
+  priority?: "high" | "medium" | "low";
 };
+
+const PRIORITY_STYLES = {
+  high: "border-red-500 bg-red-500/10",
+  medium: "border-yellow-500 bg-yellow-500/10",
+  low: "border-green-500 bg-green-500/10",
+};
+
 
 type Schedule = {
   days: Record<string, TimeBlock[]>;
@@ -92,7 +100,9 @@ export default function WeeklySchedule({ schedule }: { schedule: Schedule }) {
                   sortedBlocks.map((block, idx) => (
                     <div
                       key={block.id || idx}
-                      className="rounded-lg border-2 border-gray-700  p-3 transition-all hover:scale-105 hover:shadow-lg hover:border-indigo-500 hover:bg-gray-700"
+                      className={`rounded-lg border-2 p-3 transition-all hover:scale-105 hover:shadow-lg
+                        ${PRIORITY_STYLES[block.priority ?? "medium"]}
+                      `}
           
                     >
                       <p className="font-semibold text-sm mb-2 leading-tight text-white">

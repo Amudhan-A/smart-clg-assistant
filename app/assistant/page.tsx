@@ -21,7 +21,9 @@ function normalizeSchedule(schedule: any) {
       task: block.task ?? block.title ?? block.name ?? "Untitled task",
       start: block.start ?? "",
       end: block.end ?? "",
+      priority: block.priority ?? "medium",
     }));
+
   }
 
   return {
@@ -38,6 +40,7 @@ export default function AssistantPage() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [schedule, setSchedule] = useState<any | null>(null);
+  const [pendingSchedule, setPendingSchedule] = useState<any | null>(null);
 
   // ✅ ALWAYS call hooks first
   useEffect(() => {
@@ -104,7 +107,51 @@ export default function AssistantPage() {
 
   // ---------- SEND MESSAGE ----------
   const sendMessage = async () => {
-    if (!input.trim() || !schedule) return;
+    if (!input.trim() ) return;
+
+    if (pendingSchedule) {
+      const answer = input.toLowerCase().trim();
+      setInput("");
+
+      if (answer === "yes") {
+        setSchedule(normalizeSchedule(pendingSchedule));
+
+        await setDoc(
+          doc(db, "users", user.uid, "schedule", "weekly"),
+          pendingSchedule,
+          { merge: true }
+        );
+
+        setPendingSchedule(null);
+
+        setMessages(prev => [
+          ...prev,
+          { role: "assistant", content: "✅ Schedule updated" },
+        ]);
+        return;
+      }
+
+      if (answer === "no") {
+        setPendingSchedule(null);
+        setMessages(prev => [
+          ...prev,
+          { role: "assistant", content: "❌ Change cancelled" },
+        ]);
+        return;
+      }
+
+      setMessages(prev => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "Please type **yes** or **no**.",
+        },
+      ]);
+      return;
+    }
+
+    if (!schedule) return;
+
 
     const userText = input;
     setInput('');
@@ -156,6 +203,21 @@ export default function AssistantPage() {
           { role: 'assistant', content: "✅ Schedule updated" },
         ]);
       }
+
+      if (data.type === "confirmation") {
+        setMessages(prev => [
+          ...prev,
+          {
+            role: "assistant",
+            content:
+              "⚠️ This change affects a high-priority task.\nType **yes** to confirm or **no** to cancel.",
+          },
+        ]);
+
+        setPendingSchedule(data.pendingSchedule);
+        return;
+      }
+
     } catch (err) {
       console.error(err);
     } finally {
